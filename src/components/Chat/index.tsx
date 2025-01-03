@@ -390,12 +390,17 @@ const Chat: React.FC = () => {
               <div
                 className={`max-w-[75%] p-4 rounded-2xl glass-morphism message-transition ${
                   msg.isUser 
-                    ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/20' 
-                    : 'bg-gradient-to-r from-gray-500/20 to-slate-500/20 border border-gray-500/20'
+                    ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/20 hover:from-blue-500/30 hover:to-purple-500/30' 
+                    : 'bg-gradient-to-r from-gray-500/20 to-slate-500/20 border border-gray-500/20 hover:from-gray-500/30 hover:to-slate-500/30'
                 }`}
                 style={{ transitionDelay: `${index * 0.1}s` }}
               >
-                {msg.text}
+                <div className="relative">
+                  {msg.text}
+                  <div className="absolute -bottom-2 right-0 text-xs text-gray-400">
+                    {new Date().toLocaleTimeString()}
+                  </div>
+                </div>
               </div>
             </div>
           ))}
@@ -417,20 +422,32 @@ const Chat: React.FC = () => {
               ></canvas>
             )}
           </button>
-          <input
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyPress={handleKeyPress}
-            className="flex-1 p-3 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 shadow-md transition-all duration-300 ease-in-out focus:outline-none focus:border-blue-500"
-            placeholder="Type your message..."
-          />
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="w-full p-4 rounded-lg input-box focus:outline-none"
+              placeholder="Type your message..."
+            />
+            {inputText && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">
+                {inputText.length} characters
+              </div>
+            )}
+          </div>
           <button
             onClick={handleTextInput}
-            className="p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-lg transition-all duration-300 ease-in-out hover:scale-110"
+            disabled={!inputText.trim()}
+            className={`p-3 rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 ${
+              inputText.trim() 
+                ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
             aria-label="Send message"
           >
-            <FaPaperPlane size={20} />
+            <FaPaperPlane size={20} className={inputText.trim() ? 'animate-pulse' : ''} />
           </button>
         </div>
         <Tooltip id="microphone-tooltip" className="opacity-0 transition-opacity duration-300 ease-in-out" />
