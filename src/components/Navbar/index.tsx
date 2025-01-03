@@ -10,7 +10,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 w-full bg-white/10 backdrop-blur-md z-50 shadow-lg">
+    <nav className="sticky top-0 w-full bg-black z-50 shadow-lg border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0 flex items-center">
@@ -19,7 +19,7 @@ const Navbar = () => {
               alt="Logo" 
               className="h-8 w-8 mr-2 rounded-full"
             />
-            <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+            <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-zinc-300 to-zinc-500 bg-clip-text text-transparent">
               Debate AI
             </Link>
           </div>

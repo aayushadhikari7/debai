@@ -12,7 +12,7 @@ export default function RootLayout({
       <body>
         <NextAuthProvider>
           <Navbar />
-          <div className="pt-16">
+          <div className="min-h-screen">
             {children}
           </div>
         </NextAuthProvider>

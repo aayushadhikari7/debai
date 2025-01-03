@@ -349,13 +349,13 @@ const Chat: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'} font-poppins relative transition-colors duration-500 ease-in-out`}>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-zinc-900 text-gray-200' : 'bg-zinc-800 text-gray-200'} font-poppins relative transition-colors duration-500 ease-in-out`}>
       {/* Blurred background */}
       <div className="absolute inset-0 bg-[url('/background.jpg')] bg-cover bg-center blur-sm transition-opacity duration-500 ease-in-out"></div>
-      <div className="relative z-10 flex flex-col h-screen max-w-7xl mx-auto p-6 md:p-8 rounded-2xl glass-morphism transition-all duration-500 ease-in-out">
+      <div className="relative z-10 flex flex-col h-[calc(100vh-8rem)] max-w-6xl mx-auto my-6 p-6 md:p-8 rounded-2xl glass-morphism transition-all duration-500 ease-in-out">
         <div className="flex justify-between items-center mb-6 md:mb-8 pb-4 border-b border-gray-700/30">
           <div className="flex flex-col">
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent">
               Debate AI Talkbot
             </h1>
             <p className="text-gray-400 mt-2">Your intelligent debate companion</p>
@@ -390,14 +390,14 @@ const Chat: React.FC = () => {
               <div
                 className={`max-w-[75%] p-4 rounded-2xl glass-morphism message-transition ${
                   msg.isUser 
-                    ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/20 hover:from-blue-500/30 hover:to-purple-500/30' 
-                    : 'bg-gradient-to-r from-gray-500/20 to-slate-500/20 border border-gray-500/20 hover:from-gray-500/30 hover:to-slate-500/30'
+                    ? 'bg-gradient-to-r from-zinc-700/40 to-zinc-600/40 border border-zinc-600/30 hover:from-zinc-700/50 hover:to-zinc-600/50' 
+                    : 'bg-gradient-to-r from-zinc-800/40 to-zinc-700/40 border border-zinc-700/30 hover:from-zinc-800/50 hover:to-zinc-700/50'
                 }`}
                 style={{ transitionDelay: `${index * 0.1}s` }}
               >
                 <div className="relative">
                   {msg.text}
-                  <div className="absolute -bottom-2 right-0 text-xs text-gray-400">
+                  <div className="mt-2 text-xs text-gray-400 text-right">
                     {new Date().toLocaleTimeString()}
                   </div>
                 </div>
@@ -442,8 +442,8 @@ const Chat: React.FC = () => {
             disabled={!inputText.trim()}
             className={`p-3 rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 ${
               inputText.trim() 
-                ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                ? 'bg-gradient-to-r from-zinc-700 to-zinc-600 text-gray-200' 
+                : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
             }`}
             aria-label="Send message"
           >

@@ -13,8 +13,9 @@ export default function SignOut() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-400 to-purple-500">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white/10 backdrop-blur-md rounded-xl shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-[#708090] relative overflow-hidden">
+      <div className="absolute inset-0 bg-[url('/stars.png')] opacity-50 animate-twinkle"></div>
+      <div className="max-w-md w-full space-y-8 p-8 bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 hover:border-white/30 transition-all duration-300">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             Sign out from your account
