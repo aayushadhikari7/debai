@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@auth/core": "^0.34.2",
     "axios": "^1.7.9",
     "dotenv": "^16.4.7",
     "elevenlabs": "^1.50.2",

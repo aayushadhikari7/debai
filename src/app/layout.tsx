@@ -1,4 +1,6 @@
 import './globals.css';
+import { NextAuthProvider } from './providers';
+import Navbar from '@/components/Navbar';
 
 export default function RootLayout({
   children,
@@ -7,7 +9,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <NextAuthProvider>
+          <Navbar />
+          <div className="pt-16">
+            {children}
+          </div>
+        </NextAuthProvider>
+      </body>
     </html>
   );
 }
