@@ -46,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         }}
         className={`${isExpanded ? 'w-full' : 'w-8 h-8'} flex items-center justify-center gap-2 p-1.5 mb-4 rounded-lg transition-all duration-300 bg-zinc-700 hover:bg-zinc-600 text-white mx-auto`}
       >
-        <FaPlus size={14} />
+        <FaPlus size={16} />
         {isExpanded && 'New Chat'}
       </button>
       
@@ -89,7 +89,21 @@ const Sidebar: React.FC<SidebarProps> = ({
                     }}
                     className="p-2 rounded-full hover:bg-red-500/10 text-red-500 hover:text-red-600 transition-all duration-300"
                   >
-                    <FaTrash size={14} />
+                    <FaTrash       
+              onClick={(e) => {
+              if (window.stopSpeechAndRecognition) {
+                window.stopSpeechAndRecognition();
+                if (window.playaudioRef) {
+                  window.playaudioRef.pause();
+                  window.playaudioRef.currentTime = 0;
+                }
+                speechSynthesis.cancel();
+              }
+              onSelectChat(chat.id);
+              if (windowWidth < 768) {
+                setIsMobileMenuOpen(false);
+              }
+            }}  size={14} />
                   </button>
                 )}
               </div>
