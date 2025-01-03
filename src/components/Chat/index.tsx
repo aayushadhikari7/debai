@@ -352,9 +352,14 @@ const Chat: React.FC = () => {
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'} font-poppins relative transition-colors duration-500 ease-in-out`}>
       {/* Blurred background */}
       <div className="absolute inset-0 bg-[url('/background.jpg')] bg-cover bg-center blur-sm transition-opacity duration-500 ease-in-out"></div>
-      <div className="relative z-10 flex flex-col h-screen max-w-6xl mx-auto p-6 md:p-8 rounded-lg shadow-2xl bg-white/95 dark:bg-gray-800/95 border dark:border-gray-700 transition-all duration-500 ease-in-out">
-        <div className="flex justify-between items-center mb-6 md:mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold transition-all duration-500 ease-in-out">Debate AI Talkbot</h1>
+      <div className="relative z-10 flex flex-col h-screen max-w-7xl mx-auto p-6 md:p-8 rounded-2xl glass-morphism transition-all duration-500 ease-in-out">
+        <div className="flex justify-between items-center mb-6 md:mb-8 pb-4 border-b border-gray-700/30">
+          <div className="flex flex-col">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              Debate AI Talkbot
+            </h1>
+            <p className="text-gray-400 mt-2">Your intelligent debate companion</p>
+          </div>
           <div className="flex gap-2">
             <button
               onClick={toggleDarkMode}
@@ -372,18 +377,22 @@ const Chat: React.FC = () => {
         </div>
         <div
           ref={chatContainerRef}
-          className="flex-1 overflow-y-auto space-y-4 mb-4 md:mb-6 p-4 md:p-6 rounded-lg shadow-inner bg-gray-50/90 dark:bg-gray-900/90 transition-all duration-500 ease-in-out "
+          className="flex-1 overflow-y-auto space-y-4 mb-4 md:mb-6 p-4 md:p-6 rounded-xl glass-morphism transition-all duration-500 ease-in-out custom-scrollbar"
         >
           {messages.map((msg, index) => (
             <div
               key={index}
-              className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'} items-start gap-3 animate-bounceIn`}
+              className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'} items-start gap-3 animate-bounceIn hover-scale`}
             >
               <div className={`p-3 rounded-full ${msg.isUser ? 'bg-blue-500' : 'bg-gray-500'} text-white shadow-lg transition-all duration-500 ease-in-out`}>
                 {msg.isUser ? <FaUser size={18} /> : <FaRobot size={18} />}
               </div>
               <div
-                className={`max-w-[75%] p-4 rounded-lg shadow-md transition-all duration-300 ease-in-out ${msg.isUser ? 'bg-gray-200 dark:bg-gray-700 text-black dark:text-white' : 'bg-gray-300 dark:bg-gray-800 text-black dark:text-white'}`}
+                className={`max-w-[75%] p-4 rounded-2xl glass-morphism message-transition ${
+                  msg.isUser 
+                    ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/20' 
+                    : 'bg-gradient-to-r from-gray-500/20 to-slate-500/20 border border-gray-500/20'
+                }`}
                 style={{ transitionDelay: `${index * 0.1}s` }}
               >
                 {msg.text}
