@@ -15,8 +15,26 @@ let mediaRecorder: MediaRecorder | null = null;
 let audioChunks: Blob[] = [];
 
 
-const Chat: React.FC = () => {
-  const [messages, setMessages] = useState<{ isUser: boolean; text: string }[]>([]);
+interface ChatProps {
+  messages: { isUser: boolean; text: string }[];
+  onMessagesUpdate: (messages: { isUser: boolean; text: string }[]) => void;
+}
+
+const Chat: React.FC<ChatProps> = (props) => {
+  const [messages, setMessages] = useState<{ isUser: boolean; text: string }[]>(props.messages);
+
+  // Update local messages when props change
+  useEffect(() => {
+    setMessages(props.messages);
+  }, [props.messages]);
+
+  // Update parent when local messages change
+  useEffect(() => {
+    const messagesChanged = JSON.stringify(messages) !== JSON.stringify(props.messages);
+    if (messagesChanged) {
+      props.onMessagesUpdate(messages);
+    }
+  }, [messages]);
   const [inputText, setInputText] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(true); // Start in dark mode
   const [isRecording, setIsRecording] = useState(false);
@@ -62,13 +80,17 @@ const Chat: React.FC = () => {
   // Stop speech synthesis and recognition when interrupted
   const stopSpeechAndRecognition = () => {
     if (isSpeaking) {
-      playaudioRef.current?.pause()
-      speechSynthesis.cancel(); // Stop AI speech
+      playaudioRef.current?.pause();
       setIsSpeaking(false);
     }
-    if (isRecording && recognitionRef.current) {
-      recognitionRef.current.stop(); // Stop speech recognition
+    if (isRecording) {
+      if (mediaRecorder) {
+        mediaRecorder.stop();
+      }
       setIsRecording(false);
+    }
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
     }
   };
 
@@ -346,16 +368,19 @@ const Chat: React.FC = () => {
   const startNewChat = () => {
     stopSpeechAndRecognition(); // Stop speech and recognition when starting a new chat
     setMessages([]);
+    props.onMessagesUpdate([]); // Add this line to update parent state
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-zinc-900 text-gray-200' : 'bg-zinc-800 text-gray-200'} font-poppins relative transition-colors duration-500 ease-in-out`}>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-zinc-900 text-zinc-100' : 'bg-white text-zinc-900'} font-poppins relative transition-colors duration-500 ease-in-out`}>
       {/* Blurred background */}
-      <div className="absolute inset-0 bg-[url('/background.jpg')] bg-cover bg-center blur-sm transition-opacity duration-500 ease-in-out"></div>
-      <div className="relative z-10 flex flex-col h-[calc(100vh-8rem)] max-w-6xl mx-auto my-6 p-6 md:p-8 rounded-2xl glass-morphism transition-all duration-500 ease-in-out">
+      <div className="absolute inset-0 bg-zinc-900 transition-opacity duration-500 ease-in-out"></div>
+      <div className={`relative z-10 flex flex-col h-[calc(100vh-4rem)] max-w-6xl mx-auto p-4 md:p-6 rounded-2xl glass-morphism transition-all duration-500 ease-in-out ${
+        isDarkMode ? 'bg-zinc-800/50' : 'bg-white/90'
+      }`}>
         <div className="flex justify-between items-center mb-6 md:mb-8 pb-4 border-b border-gray-700/30">
           <div className="flex flex-col">
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent">
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent">
               Debate AI Talkbot
             </h1>
             <p className="text-gray-400 mt-2">Your intelligent debate companion</p>
@@ -377,7 +402,7 @@ const Chat: React.FC = () => {
         </div>
         <div
           ref={chatContainerRef}
-          className="flex-1 overflow-y-auto space-y-4 mb-4 md:mb-6 p-4 md:p-6 rounded-xl glass-morphism transition-all duration-500 ease-in-out custom-scrollbar"
+          className="flex-1 overflow-y-auto space-y-3 mb-3 md:mb-4 p-3 md:p-4 rounded-xl glass-morphism transition-all duration-500 ease-in-out custom-scrollbar"
         >
           {messages.map((msg, index) => (
             <div
@@ -389,9 +414,13 @@ const Chat: React.FC = () => {
               </div>
               <div
                 className={`max-w-[75%] p-4 rounded-2xl glass-morphism message-transition ${
-                  msg.isUser 
-                    ? 'bg-gradient-to-r from-zinc-700/40 to-zinc-600/40 border border-zinc-600/30 hover:from-zinc-700/50 hover:to-zinc-600/50' 
-                    : 'bg-gradient-to-r from-zinc-800/40 to-zinc-700/40 border border-zinc-700/30 hover:from-zinc-800/50 hover:to-zinc-700/50'
+                  isDarkMode 
+                    ? msg.isUser 
+                      ? 'bg-gradient-to-r from-zinc-700/40 to-zinc-600/40 border border-zinc-600/30 hover:from-zinc-700/50 hover:to-zinc-600/50'
+                      : 'bg-gradient-to-r from-zinc-800/40 to-zinc-700/40 border border-zinc-700/30 hover:from-zinc-800/50 hover:to-zinc-700/50'
+                    : msg.isUser
+                      ? 'bg-gradient-to-r from-blue-100 to-blue-200 border border-blue-200 hover:from-blue-200 hover:to-blue-300'
+                      : 'bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-200 hover:from-gray-200 hover:to-gray-300'
                 }`}
                 style={{ transitionDelay: `${index * 0.1}s` }}
               >

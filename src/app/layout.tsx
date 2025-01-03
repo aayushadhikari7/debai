@@ -12,7 +12,7 @@ export default function RootLayout({
       <body>
         <NextAuthProvider>
           <Navbar />
-          <div className="min-h-screen">
+          <div className="min-h-screen bg-zinc-900 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
             {children}
           </div>
         </NextAuthProvider>

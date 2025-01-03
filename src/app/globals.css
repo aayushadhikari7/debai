@@ -13,11 +13,13 @@ body {
 }
 
 body.dark {
-  background: linear-gradient(to bottom right, #1a1a1a, #2d2d2d, #1a1a1a);
+  background-color: #18181b;
+  color: #fafafa;
 }
 
 body:not(.dark) {
-  background: linear-gradient(to bottom right, #2d2d2d, #1a1a1a, #2d2d2d);
+  background-color: #ffffff;
+  color: #18181b;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -44,7 +46,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @keyframes twinkle {
-  0%, 100% { opacity: 0.5; }
+  0%,100% { opacity: 0.5; }
   50% { opacity: 0.8; }
 }
 
@@ -88,7 +90,7 @@ body:not(.dark) .input-box {
 
 /* Loading animation */
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
+  0%,100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
 
