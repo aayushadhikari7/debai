@@ -1,17 +1,26 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { FaUser, FaBars, FaTimes } from 'react-icons/fa';
 
+declare global {
+  interface Window {
+    stopSpeechAndRecognition?: () => void;
+    playaudioRef?: HTMLAudioElement | null;
+  }
+}
+
 const Navbar = () => {
+  const router = useRouter();
   const { data: session } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <nav className="w-full bg-zinc-900 z-50 shadow-lg border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="w-full bg-zinc-900 z-50 shadow-lg border-b border-white/10 fixed top-0">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0 flex items-center">
             <img 
@@ -26,7 +35,20 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+            <Link 
+              href="/" 
+              className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+              onClick={(e) => {
+                if (window.stopSpeechAndRecognition) {
+                  window.stopSpeechAndRecognition();
+                  if (window.playaudioRef) {
+                    window.playaudioRef.pause();
+                    window.playaudioRef.currentTime = 0;
+                  }
+                  speechSynthesis.cancel();
+                }
+              }}
+            >
               Home
             </Link>
             {session ? (

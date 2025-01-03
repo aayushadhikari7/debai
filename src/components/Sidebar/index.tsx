@@ -44,17 +44,26 @@ const Sidebar: React.FC<SidebarProps> = ({
           e.stopPropagation();
           onNewChat();
         }}
-        className="w-full flex items-center justify-center gap-2 p-3 mb-4 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white transition-colors"
+        className={`${isExpanded ? 'w-full' : 'w-8 h-8'} flex items-center justify-center gap-2 p-1.5 mb-4 rounded-lg transition-all duration-300 bg-zinc-700 hover:bg-zinc-600 text-white mx-auto`}
       >
-        <FaPlus /> New Chat
+        <FaPlus size={14} />
+        {isExpanded && 'New Chat'}
       </button>
       
-      <div className="space-y-2">
+      {isExpanded && <div className="space-y-2">
         {chatHistory.map((chat) => (
           <div
             key={chat.id}
             onClick={(e) => {
               e.stopPropagation();
+              if (window.stopSpeechAndRecognition) {
+                window.stopSpeechAndRecognition();
+                if (window.playaudioRef) {
+                  window.playaudioRef.pause();
+                  window.playaudioRef.currentTime = 0;
+                }
+                speechSynthesis.cancel();
+              }
               onSelectChat(chat.id);
               if (windowWidth < 768) {
                 setIsMobileMenuOpen(false);
@@ -67,23 +76,27 @@ const Sidebar: React.FC<SidebarProps> = ({
             }`}
           >
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <FaHistory className="flex-shrink-0" />
-                {isExpanded && <span className="truncate">{chat.preview || 'New Chat'}</span>}
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center min-w-0">
+                  <FaHistory className="flex-shrink-0" />
+                  {isExpanded && <span className="ml-2 truncate">{chat.preview || 'New Chat'}</span>}
+                </div>
+                {isExpanded && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveChat(chat.id);
+                    }}
+                    className="p-2 rounded-full hover:bg-red-500/10 text-red-500 hover:text-red-600 transition-all duration-300"
+                  >
+                    <FaTrash size={14} />
+                  </button>
+                )}
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemoveChat(chat.id);
-                }}
-                className="text-red-500 hover:text-red-600 transition-colors"
-              >
-                <FaTrash size={14} />
-              </button>
             </div>
           </div>
         ))}
-      </div>
+      </div>}
     </>
   );
 
@@ -102,10 +115,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       {mobileMenuButton}
       
       {/* Desktop sidebar */}
-      <div className={`hidden md:flex flex-col ${isExpanded ? 'w-64' : 'w-16'} h-full bg-zinc-800 border-r border-zinc-700 p-2 transition-all duration-300 relative`}>
+      <div className={`hidden md:flex flex-col ${isExpanded ? 'w-64' : 'w-10'} h-full bg-zinc-800 border-r border-midnight p-2 transition-all duration-300 relative shrink-0`}>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="absolute -right-3 top-4 transform bg-zinc-800 p-2 rounded-full border border-zinc-700 hover:bg-zinc-700 transition-colors z-50"
+          className="absolute -right-3 top-4 transform bg-zinc-800 p-1.5 rounded-full border border-zinc-700 hover:bg-zinc-700 transition-colors z-50 flex items-center justify-center"
         >
           {isExpanded ? <FaChevronLeft size={14} /> : <FaChevronRight size={14} />}
         </button>

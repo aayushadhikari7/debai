@@ -1,7 +1,7 @@
 "use client"; // Mark as a client component
 
 import React, { useState, useEffect, useRef } from 'react';
-import { FaMicrophone, FaSun, FaMoon, FaTrash, FaRobot, FaUser, FaPaperPlane } from 'react-icons/fa';
+import { FaMicrophone, FaSun, FaMoon, FaTrash, FaRobot, FaUser, FaPaperPlane, FaVolumeUp, FaCopy } from 'react-icons/fa';
 import { Tooltip } from 'react-tooltip';
 import { ElevenLabsClient } from "elevenlabs";
 import OpenAI from 'openai';
@@ -18,6 +18,7 @@ let audioChunks: Blob[] = [];
 interface ChatProps {
   messages: { isUser: boolean; text: string }[];
   onMessagesUpdate: (messages: { isUser: boolean; text: string }[]) => void;
+  onFirstMessage?: (message: string) => void;
 }
 
 const Chat: React.FC<ChatProps> = (props) => {
@@ -77,10 +78,23 @@ const Chat: React.FC<ChatProps> = (props) => {
     }
   };
 
+  // Expose stopSpeechAndRecognition globally
+  useEffect(() => {
+    window.stopSpeechAndRecognition = stopSpeechAndRecognition;
+    window.playaudioRef = playaudioRef.current;
+    return () => {
+      window.stopSpeechAndRecognition = undefined;
+      window.playaudioRef = null;
+    };
+  }, []);
+
   // Stop speech synthesis and recognition when interrupted
   const stopSpeechAndRecognition = () => {
     if (isSpeaking) {
-      playaudioRef.current?.pause();
+      if (playaudioRef.current) {
+        playaudioRef.current.pause();
+        playaudioRef.current.currentTime = 0;
+      }
       setIsSpeaking(false);
     }
     if (isRecording) {
@@ -92,6 +106,7 @@ const Chat: React.FC<ChatProps> = (props) => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
     }
+    speechSynthesis.cancel();
   };
 
   // Handle speech input using OpenAI Whisper
@@ -146,10 +161,13 @@ const Chat: React.FC<ChatProps> = (props) => {
           });
 
           // Add transcription to messages
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            { isUser: true, text: transcription },
-          ]);
+          const newMessages = [...messages, { isUser: true, text: transcription }];
+          setMessages(newMessages);
+          
+          // If this is the first message, notify parent
+          if (messages.length === 0) {
+            props.onFirstMessage?.(transcription);
+          }
 
           if (transcription.toLowerCase().includes('exit')) {
             setMessages((prevMessages) => [
@@ -269,10 +287,13 @@ const Chat: React.FC<ChatProps> = (props) => {
 
     stopSpeechAndRecognition(); // Stop speech and recognition when typing
 
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      { isUser: true, text: inputText },
-    ]);
+    const newMessages = [...messages, { isUser: true, text: inputText }];
+    setMessages(newMessages);
+    
+    // If this is the first message, notify parent
+    if (messages.length === 0) {
+      props.onFirstMessage?.(inputText);
+    }
 
     if (inputText.toLowerCase().includes('exit')) {
       setMessages((prevMessages) => [
@@ -366,24 +387,34 @@ const Chat: React.FC<ChatProps> = (props) => {
 
   // Start a new chat
   const startNewChat = () => {
-    stopSpeechAndRecognition(); // Stop speech and recognition when starting a new chat
+    stopSpeechAndRecognition();
     setMessages([]);
-    props.onMessagesUpdate([]); // Add this line to update parent state
+    props.onMessagesUpdate([]);
+    // Remove current chat from history
+    if (window.removeCurrentChat) {
+      window.removeCurrentChat();
+    }
   };
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-zinc-900 text-zinc-100' : 'bg-white text-zinc-900'} font-poppins relative transition-colors duration-500 ease-in-out`}>
       {/* Blurred background */}
       <div className="absolute inset-0 bg-zinc-900 transition-opacity duration-500 ease-in-out"></div>
-      <div className={`relative z-10 flex flex-col h-[calc(100vh-4rem)] max-w-6xl mx-auto p-4 md:p-6 rounded-2xl glass-morphism transition-all duration-500 ease-in-out ${
+      <div className={`relative z-10 flex flex-col h-[calc(100vh-4rem)] w-full max-w-[95%] lg:max-w-[85%] mx-auto p-2 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl glass-morphism transition-all duration-500 ease-in-out ${
         isDarkMode ? 'bg-zinc-800/50' : 'bg-white/90'
       }`}>
         <div className="flex justify-between items-center mb-6 md:mb-8 pb-4 border-b border-gray-700/30">
           <div className="flex flex-col">
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent">
+            <h1 className={`text-3xl md:text-4xl font-bold ${
+              isDarkMode 
+                ? 'bg-gradient-to-r from-gray-300 to-gray-500'
+                : 'bg-gradient-to-r from-gray-700 to-gray-900'
+              } bg-clip-text text-transparent`}>
               Debate AI Talkbot
             </h1>
-            <p className="text-gray-400 mt-2">Your intelligent debate companion</p>
+            <p className={`mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Your intelligent debate companion
+            </p>
           </div>
           <div className="flex gap-2">
             <button
@@ -413,33 +444,63 @@ const Chat: React.FC<ChatProps> = (props) => {
                 {msg.isUser ? <FaUser size={18} /> : <FaRobot size={18} />}
               </div>
               <div
-                className={`max-w-[75%] p-4 rounded-2xl glass-morphism message-transition ${
+                className={`max-w-[85%] sm:max-w-[75%] p-2 sm:p-4 rounded-xl sm:rounded-2xl message-transition ${
                   isDarkMode 
                     ? msg.isUser 
-                      ? 'bg-gradient-to-r from-zinc-700/40 to-zinc-600/40 border border-zinc-600/30 hover:from-zinc-700/50 hover:to-zinc-600/50'
-                      : 'bg-gradient-to-r from-zinc-800/40 to-zinc-700/40 border border-zinc-700/30 hover:from-zinc-800/50 hover:to-zinc-700/50'
+                      ? 'bg-gradient-to-r from-zinc-700/40 to-zinc-600/40 border border-zinc-600/30'
+                      : 'bg-gradient-to-r from-zinc-800/40 to-zinc-700/40 border border-zinc-700/30'
                     : msg.isUser
-                      ? 'bg-gradient-to-r from-blue-100 to-blue-200 border border-blue-200 hover:from-blue-200 hover:to-blue-300'
-                      : 'bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-200 hover:from-gray-200 hover:to-gray-300'
+                      ? 'bg-gradient-to-r from-zinc-700/40 to-zinc-600/40 border border-zinc-600/30'
+                      : 'bg-gradient-to-r from-zinc-800/40 to-zinc-700/40 border border-zinc-700/30'
                 }`}
                 style={{ transitionDelay: `${index * 0.1}s` }}
               >
-                <div className="relative">
-                  {msg.text}
-                  <div className="mt-2 text-xs text-gray-400 text-right">
-                    {new Date().toLocaleTimeString()}
+                <div className="relative min-h-[60px] pb-8">
+                  <div className="flex-1 text-[16px]">{msg.text}</div>
+                  <div className="absolute bottom-0 right-0 flex items-center gap-2.5 mt-4">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(msg.text);
+                      }}
+                      className={`p-1.5 rounded-full transition-all duration-300 ${
+                        isDarkMode
+                          ? 'hover:bg-zinc-700/50 text-gray-400 hover:text-gray-200'
+                          : 'hover:bg-gray-200/50 text-gray-600 hover:text-gray-800'
+                      }`}
+                      title="Copy message"
+                    >
+                      <FaCopy size={14} />
+                    </button>
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        stopSpeechAndRecognition();
+                        await speakText(msg.text);
+                      }}
+                      className={`p-1.5 rounded-full transition-all duration-300 ${
+                        isDarkMode
+                          ? 'hover:bg-zinc-700/50 text-gray-400 hover:text-gray-200'
+                          : 'hover:bg-gray-200/50 text-gray-600 hover:text-gray-800'
+                      }`}
+                      title="Play message"
+                    >
+                      <FaVolumeUp size={14} />
+                    </button>
+                    <div className="text-xs text-gray-400">
+                      {new Date().toLocaleTimeString()}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
-        <div className="flex gap-3 items-center">
+        <div className="flex gap-2 sm:gap-3 items-center">
           <button
             data-tooltip-id="microphone-tooltip"
             data-tooltip-content="Click to speak"
             onClick={handleSpeechInput}
-            className={`relative w-24 h-12 rounded-lg bg-blue-200 flex items-center justify-center transition-all duration-300 ease-in-out ${isRecording ? 'bg-red-500' : ''}`}
+            className={`relative w-12 sm:w-24 h-10 sm:h-12 rounded-lg bg-blue-200 flex items-center justify-center transition-all duration-300 ease-in-out ${isRecording ? 'bg-red-500' : ''}`}
           >
             {!isRecording && (
               <FaMicrophone size={20} color={isRecording ? 'white' : 'black'} />

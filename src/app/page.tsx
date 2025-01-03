@@ -1,5 +1,11 @@
 "use client";
 
+declare global {
+  interface Window {
+    removeCurrentChat?: () => void;
+  }
+}
+
 import { useState, useEffect } from 'react';
 import Chat from '../components/Chat';
 import Sidebar from '../components/Sidebar';
@@ -35,15 +41,53 @@ export default function Home() {
     }
   }, [chatHistory, currentChatId]);
 
-  const handleNewChat = () => {
+  const handleNewChat = (initialMessage?: string, title?: string) => {
     const newChatId = Date.now();
     setChatHistory(prev => [...prev, { 
       id: newChatId, 
-      preview: 'New Chat',
-      messages: []
+      preview: title || initialMessage || 'New Chat',
+      messages: initialMessage ? [{ isUser: true, text: initialMessage }] : []
     }]);
     setCurrentChatId(newChatId);
   };
+
+  const generateChatTitle = async (message: string) => {
+    try {
+      const response = await fetch('/api/debate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          prompt: `Generate a short, concise title (max 4-5 words) for a conversation that starts with: "${message}"`
+        }),
+      });
+      const data = await response.json();
+      return data.response.slice(0, 50); // Limit title length
+    } catch (error) {
+      console.error('Error generating title:', error);
+      return message.slice(0, 30) + '...'; // Fallback to truncated message
+    }
+  };
+
+  const handleFirstMessage = async (message: string) => {
+    if (!currentChatId) {
+      const title = await generateChatTitle(message);
+      handleNewChat(message, title);
+    }
+  };
+
+  // Expose removeCurrentChat globally
+  useEffect(() => {
+    window.removeCurrentChat = () => {
+      if (currentChatId) {
+        handleRemoveChat(currentChatId);
+      }
+    };
+    return () => {
+      window.removeCurrentChat = undefined;
+    };
+  }, [currentChatId]);
 
   const handleRemoveChat = (chatId: number) => {
     setChatHistory(prev => prev.filter(chat => chat.id !== chatId));
@@ -76,7 +120,7 @@ export default function Home() {
   };
 
   return (
-    <main className="flex h-screen overflow-hidden">
+    <main className="flex h-screen overflow-hidden pt-16 bg-zinc-900">
       <Sidebar 
         onNewChat={handleNewChat}
         chatHistory={chatHistory}
@@ -92,6 +136,7 @@ export default function Home() {
               updateChatPreview(currentChatId, messages);
             }
           }}
+          onFirstMessage={handleFirstMessage}
         />
       </div>
     </main>
