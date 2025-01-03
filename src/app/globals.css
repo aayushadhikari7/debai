@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Tailwind base styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+body {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Dark mode styles */
+.dark {
+  background-color: theme('colors.gray.900');
+  color: theme('colors.white');
+}
+
+/* Chat container styles */
+.chat-container {
+  width: 80%;
+  max-width: 1200px;
+  padding: 2rem;
+}
+
+/* Blurred background effect */
+.blurred-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/background.jpg');
+  background-size: cover;
+  background-position: center;
+  filter: blur(8px);
+  z-index: -1;
+}
+
+/* Message bubble styles */
+.message-bubble {
+  max-width: 75%;
+  padding: 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.message-bubble.user {
+  background-color: theme('colors.blue.500');
+  color: theme('colors.white');
+}
+
+.message-bubble.ai {
+  background-color: theme('colors.gray.200');
+  color: theme('colors.black');
+}
+
+.dark .message-bubble.ai {
+  background-color: theme('colors.gray.700');
+  color: theme('colors.white');
+}
+
+/* Microphone button animation */
+.microphone-button {
+  transition: transform 0.3s ease;
+}
+
+/* Tooltip styles */
+.react-tooltip {
+  z-index: 9999;
+}
+
+/* Canvas Styling for Waveform Visualization */
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Ensure the canvas doesn't interfere with button clicks */
+}
+
+/* Button Styling for Microphone Button */
+button {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Waveform Animation */
+@keyframes waveAnimation {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-waveform {
+  animation: waveAnimation 2s linear infinite;
+}
+
+/* Dark Mode Support for Canvas */
+.dark canvas {
+  background-color: rgba(0, 0, 0, 0.1); /* Slightly darker background in dark mode */
+}
+
+/* Sound Wave Animation */
+.animate-sound-wave-animation {
+  animation: soundWave 2s infinite;
+}
+
+@keyframes soundWave {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
