@@ -4,9 +4,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaMicrophone, FaSun, FaMoon, FaTrash, FaRobot, FaUser, FaPaperPlane } from 'react-icons/fa';
 import { Tooltip } from 'react-tooltip';
 import { ElevenLabsClient } from "elevenlabs";
+import OpenAI from 'openai';
 // import 'env/config'
 
-const client = new ElevenLabsClient({ apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY})
+const client = new ElevenLabsClient({ apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY});
+const openai = new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY, dangerouslyAllowBrowser: true  });
+
+// MediaRecorder for capturing audio
+let mediaRecorder: MediaRecorder | null = null;
+let audioChunks: Blob[] = [];
 
 
 const Chat: React.FC = () => {
@@ -66,100 +72,108 @@ const Chat: React.FC = () => {
     }
   };
 
-  // Handle speech input
+  // Handle speech input using OpenAI Whisper
   const handleSpeechInput = async () => {
     // Stop AI speech immediately
     stopSpeechAndRecognition();
 
     // Stop recording if already active
-    if (isRecording && recognitionRef.current) {
-      recognitionRef.current.stop();
+    if (isRecording) {
+      if (mediaRecorder) {
+        mediaRecorder.stop();
+      }
       setIsRecording(false);
       return;
     }
 
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    try {
+      // Initialize audio context and analyser for visualization
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const analyser = audioContext.createAnalyser();
+      analyserRef.current = analyser;
 
-    if (!SpeechRecognition) {
-      alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
-      return;
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyser);
+
+      // Create and configure MediaRecorder
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        // Create audio blob from recorded chunks
+        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+        
+        try {
+          // Create form data for OpenAI API
+          const formData = new FormData();
+          formData.append('file', audioBlob, 'speech.mp3');
+          formData.append('model', 'whisper-1');
+               // Convert Blob to File object
+          const audioFile = new File([audioBlob], 'speech.mp3', { type: 'audio/mp3' });
+          
+          // Get transcription from OpenAI
+          const transcription = await openai.audio.transcriptions.create({
+            file: audioFile,
+            model: "whisper-1",
+            response_format: "text",
+          });
+
+          // Add transcription to messages
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { isUser: true, text: transcription },
+          ]);
+
+          if (transcription.toLowerCase().includes('exit')) {
+            setMessages((prevMessages) => [
+              ...prevMessages,
+              { isUser: false, text: 'Exiting conversation. Goodbye!' },
+            ]);
+            return;
+          }
+
+          // Get AI response
+          const response = await fetch('/api/debate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt: transcription }),
+          });
+          const data = await response.json();
+          
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { isUser: false, text: data.response },
+          ]);
+          
+          await speakText(data.response);
+        } catch (error) {
+          console.error('Error processing audio:', error);
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { isUser: false, text: 'Error processing audio.' },
+          ]);
+        }
+
+        // Cleanup
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      // Start recording
+      mediaRecorder.start();
+      setIsRecording(true);
+
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      alert('Error accessing microphone. Please ensure you have granted microphone permissions.');
+      setIsRecording(false);
     }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    recognitionRef.current = recognition; // Store recognition instance
-
-    // Initialize audio context and analyser for visualization
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const analyser = audioContext.createAnalyser();
-    analyserRef.current = analyser;
-
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
-        const source = audioContext.createMediaStreamSource(stream);
-        source.connect(analyser);
-      });
-
-    recognition.start();
-    setIsRecording(true);
-
-    recognition.onresult = async (event) => {
-      const transcript = Array.from(event.results)
-        .map((result) => result[0].transcript)
-        .join('');
-
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { isUser: true, text: transcript },
-      ]);
-
-      if (transcript.toLowerCase().includes('exit')) {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { isUser: false, text: 'Exiting conversation. Goodbye!' },
-        ]);
-        recognition.stop();
-        setIsRecording(false);
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/debate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ prompt: transcript }),
-        });
-        const data = await response.json();
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { isUser: false, text: data.response },
-        ]);
-        await speakText(data.response);
-      } catch (error) {
-        console.error('Error sending to API:', error);
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { isUser: false, text: 'Error generating response.' },
-        ]);
-      }
-
-      setIsRecording(false);
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error detected: ' + event.error);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { isUser: false, text: 'Speech recognition error.' },
-      ]);
-      setIsRecording(false);
-    };
   };
 
   // Draw waveform on canvas
